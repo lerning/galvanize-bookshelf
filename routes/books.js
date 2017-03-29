@@ -55,4 +55,16 @@ router.patch('/books/:id', (req, res, next) => {
       })
 });
 
+router.delete('/books/:id', (req, res, next) => {
+  knex('books')
+   .del()
+   .where('id', req.params.id)
+   .returning('*')
+   .then((data) => {
+      delete data[0].id;
+      res.send(humps.camelizeKeys(data[0]));
+    });
+
+});
+
 module.exports = router;
