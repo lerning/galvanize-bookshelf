@@ -1,21 +1,13 @@
 'use strict';
 
 const express = require('express');
-const app = express();
-
-// eslint-disable-next-line new-cap
 const router = express.Router();
-const knex = require('knex');
+const knex = require('../knex');
+const humps = require('humps');
 const bcrypt = require('bcrypt');
-var jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 
 var cookieSession = require('cookie-session');
-
-// app.use(cookieSession({
-//   name: 'session',
-//   keys: ['Gotham','Batman'],
-// }))
-
 
 router.get('/', (req, res) => {
    if (req.cookies.token == undefined){
@@ -28,32 +20,32 @@ router.get('/', (req, res) => {
 router.post('/', (req, res) => {
    let email = req.body.email
    let password = req.body.password
-   // if (!email){
-   //    console.log('bad email caught');
-   //    res.sendStatus(400, 'Bad email or password');
-   // }
-
-   console.log('email', email);
-   console.log('password', password);
-   console.log('req body', req.body);
+   //
+   // console.log('email', email);
+   // console.log('password', password);
+   // console.log('req body', req.body);
 
    knex('users')
       .where ('email', email)
       .then((user) => {
+         // console.log('UUUSER', user[0])
          if(user.length === 0){
            res.type('text/plain');
            res.status(400);
            res.send("Bad email or password");
-         }
+        } else {
+           let checky = bcrypt.compareSync(password, user[0].hashed_password);
+           if (checky){
+             let token = jwt.sign ({email: email, password: password}, 'sh');
+             res.cookie('token', token);
+             res.json(user[0])
+          } else {
+             res.type('text/plain');
+             res.status('400');
+             res.send('Bad email or password');
+          }
+        }
       })
-
-      var token = jwt.sign ({email: email, password: password}, 'sh');
-      console.log('token', token);
-
-   res.cookie('token', token);
-   res.send()
-
-
 })
 
 module.exports = router;
