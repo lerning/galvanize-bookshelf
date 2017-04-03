@@ -20,10 +20,6 @@ router.get('/', (req, res) => {
 router.post('/', (req, res) => {
    let email = req.body.email
    let password = req.body.password
-   //
-   // console.log('email', email);
-   // console.log('password', password);
-   // console.log('req body', req.body);
 
    knex('users')
       .where ('email', email)
@@ -37,8 +33,9 @@ router.post('/', (req, res) => {
            let checky = bcrypt.compareSync(password, user[0].hashed_password);
            if (checky){
              let token = jwt.sign ({email: email, password: password}, 'sh');
-             res.cookie('token', token);
-             res.json(user[0])
+             res.cookie('token', token, { httpOnly:true });
+             delete user[0].hashed_password
+             res.send(humps.camelizeKeys(user[0]))
           } else {
              res.type('text/plain');
              res.status('400');
@@ -46,6 +43,11 @@ router.post('/', (req, res) => {
           }
         }
       })
+})
+
+router.delete('/', (req, res) => {
+  res.clearCookie('token')
+  res.send()
 })
 
 module.exports = router;
